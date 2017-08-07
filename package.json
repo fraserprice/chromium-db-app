@@ -8,9 +8,14 @@
   "dependencies": {
     "body-parser": "~1.17.1",
     "cookie-parser": "~1.4.3",
+    "cors": "^2.8.4",
     "debug": "~2.6.3",
+    "es6-promise": "^4.1.1",
     "express": "~4.15.2",
+    "isomorphic-fetch": "^2.2.1",
     "jade": "~1.11.0",
+    "mongodb": "^2.2.30",
+    "mongoose": "^4.11.5",
     "morgan": "~1.8.1",
     "serve-favicon": "~2.4.2"
   }
