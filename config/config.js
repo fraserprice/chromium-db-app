@@ -1,5 +1,5 @@
 const production_settings = {
-  db: 'mongodb://heroku_vzb7wml5:5i62a359dvp93i581b3c3316b4@ds143201.mlab.com:43201/heroku_vzb7wml5',
+  db: 'mongodb://fraser:mongopass@ds129023.mlab.com:29023/heroku_163rlf26',
 };
 
 const dev_settings = {
