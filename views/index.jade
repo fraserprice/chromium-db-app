@@ -1,4 +1,11 @@
 extends layout
 
 block content
-  h1= "This is an API for chromium bug visualisation"
+  h1= "This is an API for interacting with chromium bug visualisation database"
+  p= "Documentation:"
+  p= "Calls can be made to either /pdfium/{call} or /chromium/{call}. Currently only supported query is 'status:closed'"
+  p= "Available calls:"
+  p= "/change_numbers/:query"
+  p= "/file_changes/:query"
+  p= "/treemap/:query"
+  p= "/security_treemap/:query"
