@@ -21,17 +21,6 @@ const schema = new mongoose.Schema(
 const pdfium_cache = mongoose.model('Pdfium', schema, "pdfium");
 const pdfium_tree = mongoose.model('pdfium_tree', new mongoose.Schema({node: {}}), 'pdfium_tree');
 
-const getQueryItem = (query, item, callback) => {
-  pdfium_cache.findOne({'query': query}, (err, doc) => {
-    if(err) {
-      console.log("Could not connect to database");
-      return callback(null);
-    } else {
-      return callback(doc[item]);
-    }
-  });
-};
-
 const returnQueryItem = (query, item, res) => {
   pdfium_cache.findOne({'query': query}, (err, doc) => {
     if(err) {
@@ -42,16 +31,36 @@ const returnQueryItem = (query, item, res) => {
   });
 };
 
+const returnTreemap = (bug_type, req, res) => {
+  const query = req.params.query;
+  const rootPath = req.params.root_path;
+  const depth = parseInt(req.params.depth);
+  const normalise = req.params.normalise === 'true';
+  utils.getTree(query, pdfium_tree, (err, tree) => {
+    if(err) {
+      return res.sendStatus(500);
+    } else {
+      const subtree = utils.getSubtree(tree, rootPath, depth);
+      return res.json(utils.googleTreemapFormat(subtree, bug_type, normalise));
+    }
+  });
+};
+
 router.get('/', (req, res) => {
   res.render('index');
 });
 
 // Get traversable tree for given query
-router.get('/tree/:query', (req, res) => {
+router.get('/tree/:query/:root_path/:depth', (req, res) => {
   const query = req.params.query;
+  const rootPath = req.params.root_path;
+  const depth = parseInt(req.params.depth);
   utils.getTree(query, pdfium_tree, (err, tree) => {
     if(err) {
       return res.sendStatus(500);
+    }
+    if(depth > 0) {
+      tree = utils.getSubtree(tree, rootPath, depth);
     }
     return res.json(tree);
   });
@@ -69,58 +78,32 @@ router.get('/update_tree/:query', (req, res) => {
   });
 });
 
-//Get change numbers for given query
+// Get change numbers for given query
 router.get('/change_numbers/:query', function(req, res) {
   const query = req.params.query;
   return returnQueryItem(query, 'change_numbers', res)
 });
 
-//Get all file changes for given query
+// Get all file changes for given query
 router.get('/file_changes/:query', function(req, res) {
   const query = req.params.query;
   return returnQueryItem(query, 'file_changes', res)
 });
 
-//Get treemap for given query
-router.get('/treemap/:query', function(req, res) {
-  const query = req.params.query;
-  return returnQueryItem(query, 'treemap', res)
+// Get treemap for given query, rooted at given file/folder, for given depth
+router.get('/treemap/:query/:root_path/:depth/:normalise', (req, res) => {
+  return returnTreemap('bugs', req, res);
 });
 
-//Get security treemap for given query
-router.get('/security_treemap/:query', function(req, res) {
-  const query = req.params.query;
-  return returnQueryItem(query, 'security_treemap', res)
+// Get security treemap for given query, rooted at given file/folder, for given depth
+router.get('/security_treemap/:query/:root_path/:depth/:normalise', (req, res) => {
+  return returnTreemap('security_bugs', req, res);
 });
 
-//Get treemap for given query, rooted at given file/folder, for given depth
-router.get('/subtreemap/:query/:root_path/:depth', (req, res) => {
-  const query = req.params.query;
-  const rootPath = req.params.root_path;
-  const depth = parseInt(req.params.depth);
-  getQueryItem(query, 'tree', tree => {
-    if(tree !== null) {
-      const subtree = utils.getSubtree(tree, rootPath, depth);
-      return res.json(utils.googleTreemapFormat(subtree, false));
-    } else {
-      return res.sendStatus(500);
-    }
-  });
-});
-
-//Get security treemap for given query, rooted at given file/folder, for given depth
-router.get('/security_subtreemap/:query/:root_path/:depth', (req, res) => {
-  const query = req.params.query;
-  const rootPath = req.params.root_path;
-  const depth = parseInt(req.params.depth);
-  getQueryItem(query, 'tree', tree => {
-    if(tree !== null) {
-      const subtree = utils.getSubtree(tree, rootPath, depth);
-      return res.json(utils.googleTreemapFormat(subtree, true));
-    } else {
-      return res.sendStatus(500);
-    }
-  });
+// Get ratio of sec bugs : bugs for given query, rooted at given file/folder, for given depth (0 => infinite),
+// with bool for normalisation
+router.get('/security_ratio_treemap/:query/:root_path/:depth/:normalise', (req, res) => {
+  return returnTreemap('security_bug_ratio', req, res);
 });
 
 module.exports = router;

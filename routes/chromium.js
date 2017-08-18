@@ -39,6 +39,21 @@ const returnQueryItem = (query, item, res) => {
   });
 };
 
+const returnTreemap = (bug_type, req, res) => {
+  const query = req.params.query;
+  const rootPath = req.params.root_path;
+  const depth = parseInt(req.params.depth);
+  const normalise = req.params.normalise === 'true';
+  getQueryItem(query, 'tree', tree => {
+    if(tree !== null) {
+      const subtree = utils.getSubtree(tree, rootPath, depth);
+      return res.json(utils.googleTreemapFormat(subtree, bug_type, normalise));
+    } else {
+      return res.sendStatus(500);
+    }
+  });
+};
+
 router.get('/', function(req, res) {
   res.render('index');
 });
@@ -77,46 +92,20 @@ router.get('/file_changes/:query', (req, res) => {
   return returnQueryItem(query, 'file_changes', res)
 });
 
-//Get treemap for given query
-router.get('/treemap/:query', (req, res) => {
-  const query = req.params.query;
-  return returnQueryItem(query, 'treemap', res)
+// Get treemap for given query, rooted at given file/folder, for given depth
+router.get('/treemap/:query/:root_path/:depth/:normalise', (req, res) => {
+  return returnTreemap('bugs', req, res);
 });
 
-//Get security treemap for given query
-router.get('/security_treemap/:query', (req, res) => {
-  const query = req.params.query;
-  return returnQueryItem(query, 'security_treemap', res)
+// Get security treemap for given query, rooted at given file/folder, for given depth
+router.get('/security_treemap/:query/:root_path/:depth/:normalise', (req, res) => {
+  return returnTreemap('security_bugs', req, res);
 });
 
-//Get treemap for given query, rooted at given file/folder, for given depth
-router.get('/subtreemap/:query/:root_path/:depth', (req, res) => {
-  const query = req.params.query;
-  const rootPath = req.params.root_path;
-  const depth = parseInt(req.params.depth);
-  getQueryItem(query, 'tree', tree => {
-    if(tree !== null) {
-      const subtree = utils.getSubtree(tree, rootPath, depth);
-      return res.json(utils.googleTreemapFormat(subtree, false));
-    } else {
-      return res.sendStatus(500);
-    }
-  });
-});
-
-//Get security treemap for given query, rooted at given file/folder, for given depth
-router.get('/security_subtreemap/:query/:root_path/:depth', (req, res) => {
-  const query = req.params.query;
-  const rootPath = req.params.root_path;
-  const depth = parseInt(req.params.depth);
-  getQueryItem(query, 'tree', tree => {
-    if(tree !== null) {
-      const subtree = utils.getSubtree(tree, rootPath, depth);
-      return res.json(utils.googleTreemapFormat(subtree, false));
-    } else {
-      return res.sendStatus(500);
-    }
-  });
+// Get ratio of sec bugs : bugs for given query, rooted at given file/folder, for given depth (0 => infinite),
+// with bool for normalisation
+router.get('/security_ratio_treemap/:query/:root_path/:depth/:normalise', (req, res) => {
+  return returnTreemap('security_bug_ratio', req, res);
 });
 
 module.exports = router;
