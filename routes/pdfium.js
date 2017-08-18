@@ -31,7 +31,7 @@ const returnQueryItem = (query, item, res) => {
   });
 };
 
-const returnTreemap = (bug_type, req, res) => {
+const returnTreemap = (bugType, req, res) => {
   const query = req.params.query;
   const rootPath = req.params.root_path;
   const depth = parseInt(req.params.depth);
@@ -41,7 +41,7 @@ const returnTreemap = (bug_type, req, res) => {
       return res.sendStatus(500);
     } else {
       const subtree = utils.getSubtree(tree, rootPath, depth);
-      return res.json(utils.googleTreemapFormat(subtree, bug_type, normalise));
+      return res.json(utils.googleTreemapFormat(subtree, rootPath, bugType, normalise));
     }
   });
 };

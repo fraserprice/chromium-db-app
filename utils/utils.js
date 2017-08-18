@@ -98,16 +98,16 @@ class Utils {
 
     // Convert traversible treemap into google treemap format
     // bug_type can be bugs, security_bugs or security_bug_ratio
-    this.googleTreemapFormat = (tree, bug_type, normalise) => {
+    this.googleTreemapFormat = (tree, rootPath, bugType, normalise) => {
       let treemap = [];
       for(const path in tree) {
         if(tree.hasOwnProperty(path)) {
           const node = tree[path];
           const treemapNode = [
             this.decodeFieldName(path),
-            this.decodeFieldName(node.parent),
+            path === rootPath ? null : this.decodeFieldName(node.parent),
             node.size,
-            node.bugs[bug_type]
+            node.bugs[bugType]
           ];
           treemap.push(treemapNode);
         }
