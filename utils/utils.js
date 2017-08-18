@@ -132,6 +132,7 @@ class Utils {
       });
     };
 
+    //TODO: FIX ME
     // Averages bug values of all children of given node recursively
     this.averageBugValues = (tree, nodePath) => {
       const sums = this.getBugSums(tree, [nodePath]);
