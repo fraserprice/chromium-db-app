@@ -13,12 +13,18 @@ const pdfium = require('./routes/pdfium');
 
 const app = express();
 
-const config = require('./config/config')();
+const config = require('./config/config');
 
 const dbURL = config.db;
 
 mongoose.Promise = global.Promise;
-mongoose.connect(dbURL);
+mongoose.connect(dbURL, {
+  server: {
+    socketOptions: {
+      connectTimeoutMS: 3000000, socketTimeoutMS: 30000000
+    }
+  }
+});
 
 app.use(cors());
 

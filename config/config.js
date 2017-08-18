@@ -11,8 +11,8 @@ function Config() {
     case 'production':
       return production_settings;
     default:
-      return dev_settings;
+      return production_settings;
   }
 }
 
-module.exports = Config;
+module.exports = Config();
