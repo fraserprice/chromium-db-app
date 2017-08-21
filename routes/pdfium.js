@@ -36,13 +36,11 @@ const returnTreemap = (bugType, req, res) => {
   const rootPath = req.params.root_path;
   const depth = parseInt(req.params.depth);
   const normalise = req.params.normalise === 'true';
-  utils.getTree(query, pdfium_tree, (err, tree) => {
+  utils.getSubtree(query, pdfium_tree, rootPath, depth, (err, subtree) => {
     if(err) {
       return res.sendStatus(500);
-    } else {
-      const subtree = utils.getSubtree(tree, rootPath, depth);
-      return res.json(utils.googleTreemapFormat(subtree, rootPath, bugType, normalise));
     }
+    return res.json(utils.googleTreemapFormat(subtree, rootPath, bugType, normalise));
   });
 };
 
@@ -55,14 +53,11 @@ router.get('/tree/:query/:root_path/:depth', (req, res) => {
   const query = req.params.query;
   const rootPath = req.params.root_path;
   const depth = parseInt(req.params.depth);
-  utils.getTree(query, pdfium_tree, (err, tree) => {
+  utils.getSubtree(query, pdfium_tree, rootPath, depth, (err, subtree) => {
     if(err) {
       return res.sendStatus(500);
     }
-    if(depth > 0) {
-      tree = utils.getSubtree(tree, rootPath, depth);
-    }
-    return res.json(tree);
+    return res.json(subtree);
   });
 });
 

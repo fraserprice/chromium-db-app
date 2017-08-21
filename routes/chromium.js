@@ -39,33 +39,33 @@ const returnQueryItem = (query, item, res) => {
   });
 };
 
-const returnTreemap = (bug_type, req, res) => {
+const returnTreemap = (bugType, req, res) => {
   const query = req.params.query;
   const rootPath = req.params.root_path;
   const depth = parseInt(req.params.depth);
   const normalise = req.params.normalise === 'true';
-  getQueryItem(query, 'tree', tree => {
-    if(tree !== null) {
-      const subtree = utils.getSubtree(tree, rootPath, depth);
-      return res.json(utils.googleTreemapFormat(subtree, bug_type, normalise));
-    } else {
+  utils.getSubtree(query, chromium_tree, rootPath, depth, (err, subtree) => {
+    if(err) {
       return res.sendStatus(500);
     }
+    return res.json(utils.googleTreemapFormat(subtree, rootPath, bugType, normalise));
   });
 };
 
-router.get('/', function(req, res) {
+router.get('/', (req, res) => {
   res.render('index');
 });
 
 // Get traversable tree for given query.
-router.get('/tree', (req, res) => {
+router.get('/tree/:query/:root_path/:depth', (req, res) => {
   const query = req.params.query;
-  utils.getTree(query, chromium_tree, (err, tree) => {
+  const rootPath = req.params.root_path;
+  const depth = parseInt(req.params.depth);
+  utils.getSubtree(query, chromium_tree, rootPath, depth, (err, subtree) => {
     if(err) {
       return res.sendStatus(500);
     }
-    return res.json(tree);
+    return res.json(subtree);
   });
 });
 

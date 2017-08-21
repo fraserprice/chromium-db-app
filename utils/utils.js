@@ -11,7 +11,7 @@ class Utils {
 
     this.getChildren = (treemap, path) => {
       let children = [];
-      if(treemap !== undefined) {
+      if (treemap !== undefined) {
         treemap.forEach(node => {
           if (node[1] === path) {
             children.push(node);
@@ -63,29 +63,29 @@ class Utils {
         const security_bug_ratio = bugs === 0 ? 0 : parseFloat(security_bugs) / parseFloat(bugs);
 
         tree[this.encodeFieldName(path)] = {
-          parent : this.encodeFieldName(parentPath),
-          children : children,
-          size : size,
-          bugs : {
-            bugs : bugs,
-            security_bugs : security_bugs,
-            security_bug_ratio : security_bug_ratio,
+          parent: this.encodeFieldName(parentPath),
+          children: children,
+          size: size,
+          bugs: {
+            bugs: bugs,
+            security_bugs: security_bugs,
+            security_bug_ratio: security_bug_ratio,
           },
-          query : query
+          query: query
         }
       });
-      if(cacheResult) {
+      if (cacheResult) {
         let bulk = cache.collection.initializeOrderedBulkOp();
-        for(const path in tree) {
-          if(tree.hasOwnProperty(path)) {
+        for (const path in tree) {
+          if (tree.hasOwnProperty(path)) {
             let node = tree[path];
             node.node = path;
             console.log(node);
-            bulk.find({"node" : path, "query" : query}).upsert().updateOne(node);
+            bulk.find({"node": path, "query": query}).upsert().updateOne(node);
           }
         }
         bulk.execute(err => {
-          if(err) {
+          if (err) {
             console.log('Could not save. Err:');
             console.log(err);
           } else {
@@ -100,12 +100,12 @@ class Utils {
     // bug_type can be bugs, security_bugs or security_bug_ratio
     this.googleTreemapFormat = (tree, rootPath, bugType, normalise) => {
       let treemap = [];
-      for(const path in tree) {
-        if(tree.hasOwnProperty(path)) {
+      for (const path in tree) {
+        if (tree.hasOwnProperty(path)) {
           const node = tree[path];
           const treemapNode = [
             this.decodeFieldName(path),
-            path === rootPath ? null : this.decodeFieldName(node.parent),
+            this.decodeFieldName(path) === rootPath ? null : this.decodeFieldName(node.parent),
             node.size,
             node.bugs[bugType]
           ];
@@ -120,8 +120,8 @@ class Utils {
     // Builds tree for given query from given cache documents
     this.getTree = (query, cache, callback) => {
       let tree = {};
-      cache.find({'query' : query}, { _id: 0 }, (err, nodes) => {
-        if(err) {
+      cache.find({'query': query}, {_id: 0}, (err, nodes) => {
+        if (err) {
           return callback(err);
         }
         nodes.forEach(nodeDoc => {
@@ -132,13 +132,62 @@ class Utils {
       });
     };
 
+    /* Return subtree in traversable tree format for given depth (infinte depth if 0), rooted at rootPath.
+     * Note that rootPath should contain '.' rather than '_STOP_'.
+     * Averages bugs over all child files recursively for bug numbers.
+     */
+    this.getSubtree = (query, cache, rootPath, depth, callback) => {
+      console.log(rootPath);
+      let children = [this.encodeFieldName(rootPath)];
+
+      let findSubtree = (query, children, subtree, remainingDepth, callback) => {
+        if(remainingDepth === 0 || children.length === 0) {
+          return callback(null, subtree);
+        }
+        cache.find({"query" : query, "node" : {$in: children}}, {_id: 0}, (err, childNodes) => {
+          if(err) {
+            return callback(err);
+          }
+          children = [];
+          childNodes.forEach(nodeDoc => {
+            let node = nodeDoc.toJSON();
+            subtree[node.node] = node;
+            subtree[node.node].size = parseInt(subtree[node.node].size);
+            children = children.concat(node.children);
+          });
+          findSubtree(query, children, subtree, remainingDepth - 1, callback);
+        });
+      };
+
+      let subtree = {};
+      if (depth === 0) {
+        if(rootPath === '~') {
+          this.getTree(query, cache, callback);
+        } else {
+          findSubtree(query, children, subtree, -1, callback);
+        }
+      } else {
+        findSubtree(query, children, subtree, depth, callback);
+        // Average bugs for all children in the case of leaf nodes:
+        //TODO: fix
+       // children.forEach(childPath => {
+       //   let averageBugValues = this.averageBugValues(tree, childPath);
+       //   for (const bug_type in subtree[childPath].bugs) {
+       //     if (subtree[childPath].bugs.hasOwnProperty(bug_type)) {
+       //       subtree[childPath].bugs[bug_type] = averageBugValues[bug_type]
+       //     }
+       //   }
+       // });
+      }
+    };
+
     //TODO: FIX ME
     // Averages bug values of all children of given node recursively
     this.averageBugValues = (tree, nodePath) => {
       const sums = this.getBugSums(tree, [nodePath]);
       let averageBugs = {};
-      for(const bug_type in sums.bugSums) {
-        if(sums.bugSums.hasOwnProperty(bug_type)) {
+      for (const bug_type in sums.bugSums) {
+        if (sums.bugSums.hasOwnProperty(bug_type)) {
           averageBugs[bug_type] = parseFloat(sums.bugSums[bug_type]) / parseFloat(sums.fileSum)
         }
       }
@@ -153,26 +202,26 @@ class Utils {
 
       let fileSum = 0;
       let bugSums = {};
-      for(const bug_type in tree['~'].bugs) {
-        if(tree['~'].bugs.hasOwnProperty(bug_type)) {
+      for (const bug_type in tree['~'].bugs) {
+        if (tree['~'].bugs.hasOwnProperty(bug_type)) {
           bugSums[bug_type] = 0
         }
       }
 
       children.forEach(childPath => {
         const childNode = tree[childPath];
-        if(childNode.children.length === 0) {
+        if (childNode.children.length === 0) {
           fileSum++;
-          for(const bug_type in bugSums) {
-            if(bugSums.hasOwnProperty(bug_type)) {
+          for (const bug_type in bugSums) {
+            if (bugSums.hasOwnProperty(bug_type)) {
               bugSums[bug_type] += childNode.bugs[bug_type]
             }
           }
         } else {
           const childrenSum = this.getBugSums(tree, childNode.children);
           fileSum += childrenSum.fileSum;
-          for(const bug_type in bugSums) {
-            if(bugSums.hasOwnProperty(bug_type)) {
+          for (const bug_type in bugSums) {
+            if (bugSums.hasOwnProperty(bug_type)) {
               bugSums[bug_type] += childrenSum.bugSums[bug_type]
             }
           }
@@ -198,48 +247,6 @@ class Utils {
         }
       });
     };
-
-    /* Return subtree in traversable tree format for given depth (infinte depth if 0), rooted at rootPath.
-     * Note that rootPath should contain '.' rather than '_STOP_'.
-     * Averages bugs over all child files recursively for bug numbers.
-     */
-    this.getSubtree = (tree, rootPath, depth) => {
-      rootPath = this.encodeFieldName(rootPath);
-      let subtree = {};
-      subtree[rootPath] = tree[rootPath];
-      let children = tree[rootPath].children;
-      if(depth === 0) {
-        while(true) {
-          children.forEach(childPath => subtree[childPath] = tree[childPath]);
-          let newChildren = [];
-          children.forEach(child => newChildren = newChildren.concat(tree[child].children));
-          if(newChildren.length === 0) {
-            break;
-          }
-          children = newChildren;
-        }
-      } else {
-        for(let i = 0; i < depth; i++) {
-          children.forEach(childPath => subtree[childPath] = tree[childPath]);
-          if(i === depth - 1) {
-            break;
-          }
-          let newChildren = [];
-          children.forEach(child => newChildren = newChildren.concat(tree[child].children));
-          children = newChildren;
-        }
-        // Average bugs for all children in the case of leaf nodes:
-        children.forEach(childPath => {
-          let averageBugValues = this.averageBugValues(tree, childPath);
-          for(const bug_type in subtree[childPath].bugs) {
-            if(subtree[childPath].bugs.hasOwnProperty(bug_type)) {
-              subtree[childPath].bugs[bug_type] = averageBugValues[bug_type]
-            }
-          }
-        });
-      }
-      return subtree;
-    }
   }
 
 }
