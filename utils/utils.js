@@ -109,7 +109,9 @@ class Utils {
             node.size,
             node.bugs[bugType]
           ];
-          treemap.push(treemapNode);
+          if(treemapNode[0][0] === '~'){
+            treemap.push(treemapNode);
+          }
         }
       }
       treemap = normalise ? this.normaliseByFileSize(treemap) : treemap;
