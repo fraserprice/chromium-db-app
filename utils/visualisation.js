@@ -1,4 +1,4 @@
-class Utils {
+class VisualisationUtils {
   constructor() {
 
     this.encodeFieldName = (name) => {
@@ -253,4 +253,4 @@ class Utils {
 
 }
 
-module.exports = new Utils();
+module.exports = new VisualisationUtils();

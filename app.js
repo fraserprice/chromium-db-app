@@ -26,6 +26,10 @@ mongoose.connect(dbURL, {
   }
 });
 
+console.log(__dirname);
+__dirname = "/Users/fraser/Documents/UROP/chromium-db-app";
+console.log(__dirname);
+
 app.use(cors());
 
 // view engine setup
@@ -39,6 +43,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+
 
 app.use('/', index);
 app.use('/chromium', chromium);

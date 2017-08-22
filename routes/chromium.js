@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const config = require('../config/config');
-const utils = require('../utils/utils');
+const visualisationUtils = require('../utils/visualisation');
+const vccUtils = require('../utils/vcc');
 
 const schema = new mongoose.Schema(
   {
@@ -44,11 +45,11 @@ const returnTreemap = (bugType, req, res) => {
   const rootPath = req.params.root_path;
   const depth = parseInt(req.params.depth);
   const normalise = req.params.normalise === 'true';
-  utils.getSubtree(query, chromium_tree, rootPath, depth, (err, subtree) => {
+  visualisationUtils.getSubtree(query, chromium_tree, rootPath, depth, (err, subtree) => {
     if(err) {
       return res.sendStatus(500);
     }
-    return res.json(utils.googleTreemapFormat(subtree, rootPath, bugType, normalise));
+    return res.json(visualisationUtils.googleTreemapFormat(subtree, rootPath, bugType, normalise));
   });
 };
 
@@ -61,7 +62,7 @@ router.get('/tree/:query/:root_path/:depth', (req, res) => {
   const query = req.params.query;
   const rootPath = req.params.root_path;
   const depth = parseInt(req.params.depth);
-  utils.getSubtree(query, chromium_tree, rootPath, depth, (err, subtree) => {
+  visualisationUtils.getSubtree(query, chromium_tree, rootPath, depth, (err, subtree) => {
     if(err) {
       return res.sendStatus(500);
     }
@@ -76,7 +77,7 @@ router.get('/update_tree/:query', (req, res) => {
       console.log('Could not find');
       return res.sendStatus(500);
     }
-    return res.json(utils.treeFormat(doc.security_treemap, doc.file_changes, true, chromium_tree, query));
+    return res.json(visualisationUtils.treeFormat(doc.security_treemap, doc.file_changes, true, chromium_tree, query));
   });
 });
 
@@ -106,6 +107,20 @@ router.get('/security_treemap/:query/:root_path/:depth/:normalise', (req, res) =
 // with bool for normalisation
 router.get('/security_ratio_treemap/:query/:root_path/:depth/:normalise', (req, res) => {
   return returnTreemap('security_bug_ratio', req, res);
+});
+
+// ---------------------------------------------------------------------------------------------------------------------
+
+router.get('/vbugs/:use_cached', (req, res) => {
+  const use_cached = req.params.use_cached === 'true';
+  vccUtils.getVulnBugIDs(use_cached, (err, ids) => {
+    if(err) {
+      return res.sendStatus(500);
+    }
+    console.log(ids);
+    console.log(ids.length);
+    res.sendStatus(200);
+  });
 });
 
 module.exports = router;

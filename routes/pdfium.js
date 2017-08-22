@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const config = require('../config/config');
-const utils = require('../utils/utils');
+const utils = require('../utils/visualisation');
 
 /*
   All data used by these endpoints are cached in mongodb.
