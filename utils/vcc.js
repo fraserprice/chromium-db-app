@@ -7,8 +7,12 @@
  */
 
 const fetch = require('isomorphic-fetch');
+const config = require('../config/config');
+const mongoose = require('mongoose');
+const xmlhttprequest = require('xmlhttprequest');
 
 const STABLE_UPDATES_URL = 'https://chromereleases.googleblog.com/search/label/Stable%20updates';
+const chromium_vcc = mongoose.model('chromium_vcc', new mongoose.Schema({node: {}}), 'chromium_vcc');
 
 // Find all occurrences of strings sandwiched between two other strings in a given string.
 const findSandwichedStrings = (str, sandwichStart, sandwichEnd) => {
@@ -42,6 +46,10 @@ class VccUtils {
         });
       };
 
+      if(use_cached) {
+
+      }
+
       fetchIds(STABLE_UPDATES_URL, [], callback);
     };
 
@@ -51,7 +59,8 @@ class VccUtils {
 
     this.getFixingCommits = (bug_ids, use_cached) => {
 
-    }
+    };
+
   }
 }
 

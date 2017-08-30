@@ -26,10 +26,6 @@ mongoose.connect(dbURL, {
   }
 });
 
-console.log(__dirname);
-__dirname = "/Users/fraser/Documents/UROP/chromium-db-app";
-console.log(__dirname);
-
 app.use(cors());
 
 // view engine setup
